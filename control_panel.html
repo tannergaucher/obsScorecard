@@ -16,7 +16,6 @@
 	 var versionNum = "1.0.0";
 	 //---------------------------------------------------------------------------------------------
 	 </script>
-	 <script src="./common/js/jquery.js"></script>
 	 <script src="hotkeys.js"></script>
 	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 	</head>
@@ -250,23 +249,36 @@ P2: - - - - - - - - -  - - - - - - - - - --
 	        <div class="float4" id="opacityLabel">Opacity: 100%</div>
 		<input type="range" min="0" max="100" value="100" class="slider" id="scoreOpacity">
 	    </div>
+	    <div class="horizontal colorPickers">
+		<label>Board<input type="color" data-key="board" value="#101a63" oninput="themeChange(this)"></label>
+		<label>Header<input type="color" data-key="header" value="#2a3fd1" oninput="themeChange(this)"></label>
+		<label>Accent<input type="color" data-key="accent" value="#ffc72c" oninput="themeChange(this)"></label>
+		<label>Birdie<input type="color" data-key="birdie" value="#e8423a" oninput="themeChange(this)"></label>
+	    </div>
+	    <div class="btn obs28 float8" onclick="resetTheme()">Reset colors</div>
 	</div> <!-- mainDiv -->
 <script src="./common/js/control_panel.js"></script>
 
 <script>
 	//////////////////// HotKey scripts
 
-	//Reload the hotjeys.js file updated by the LUA script
-	function updateHotkeys() {
-	    var src;
-
-	    src = 'hotkeys.js';
-	    $('script[src="' + src + '"]').remove();
-
-	    var head= document.getElementsByTagName('head')[0];
-	    var script= document.createElement('script');
-	    script.src = src;
-	    head.appendChild(script);
+	//Reload the hotkeys.js file updated by the LUA script, calling done()
+	//once it has loaded (or failed).  Only one load is ever in flight and
+	//only one hotkeys.js script element is kept in the DOM, so a slow disk
+	//can't make requests or elements pile up over a long stream.
+	var hotkeyScript = document.querySelector('script[src="hotkeys.js"]');
+	function updateHotkeys(done) {
+	    var script = document.createElement('script');
+	    script.onload = script.onerror = function() {
+		script.onload = script.onerror = null;
+		if (hotkeyScript) {
+		    hotkeyScript.remove();
+		}
+		hotkeyScript = script;
+		done();
+	    };
+	    script.src = 'hotkeys.js';
+	    document.head.appendChild(script);
 	}
 
 	//Toggle the switches if a hotkey is pressed
@@ -287,12 +299,11 @@ P2: - - - - - - - - -  - - - - - - - - - --
         }
 
 	function refreshData() {
-		var x;
-
-		x = 0.05; // Refresh time multiplier
 		checkHotkeys();
-		updateHotkeys();
-		setTimeout(refreshData, x*1000);
+		// Schedule the next poll only after this reload finishes
+		updateHotkeys(function() {
+			setTimeout(refreshData, 100);
+		});
 	}
 
 	//////////////////// end of HotKey scripts

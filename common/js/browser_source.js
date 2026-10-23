@@ -25,6 +25,9 @@ function sleep(milliseconds) {
 }
 
 function renderScoreCard() {
+	const container = document.getElementById("scoreCardFull");
+	const oldCells = Array.from(container.querySelectorAll("td"), (td) => td.textContent);
+
 	if (staticScoreCard.style == "vertical") {
 		document.getElementById("scoreCardFull").innerHTML = formatScoreCardVertical();
 	} else if (staticScoreCard.style == "mcgolf") {
@@ -32,6 +35,18 @@ function renderScoreCard() {
 	} else {
 		document.getElementById("scoreCardFull").innerHTML = formatScoreCard();
 	}
+
+	/* Mark changed cells so only they animate.  Skip the first render and
+	 * layout changes (style/player switches) where cells don't line up. */
+	const newCells = container.querySelectorAll("td");
+	if (hasRendered && newCells.length == oldCells.length) {
+		newCells.forEach((td, i) => {
+			if (td.textContent != oldCells[i]) {
+				td.classList.add("changed");
+			}
+		});
+	}
+	hasRendered = true;
 	setOpacity(staticScoreCard.opacity);
 }
 
@@ -66,27 +81,31 @@ function formatMatchScore(matchScore) {
 	if (matchScore == 0) {
 		return "<td class=\"blank\">&nbsp;</td>";
 	} else if (matchScore == 45) {
-		return "<td>AS</td>";
+		return "<td><span class=\"mark\">AS</span></td>";
 	} else {
-		return "<td>" + matchScore + "&uarr;</td>";
+		return "<td><span class=\"mark\">" + matchScore + "&uarr;</span></td>";
 	}
 }
 
 function formatScore(playerScore, par, showPar) {
 	if (!playerScore || playerScore <= 0) {
 		if (showPar) {
-			return "<td>" + par + "</td>";
+			return "<td class=\"unplayed\">" + par + "</td>";
 		} else {
 			return "<td class=\"blank\">&nbsp;</td>";
 		}
+	}
+	const mark = "<span class=\"mark\">" + playerScore + "</span></td>";
+	if (playerScore - par >= 2) {
+		return "<td class=\"bogey double\">" + mark;
 	} else if (playerScore > par) {
-		return "<td class=\"bogey\">" + playerScore + "</td>";
+		return "<td class=\"bogey\">" + mark;
 	} else if ((par - playerScore) == 1) {
-		return "<td class=\"birdie\">" + playerScore + "</td>";
+		return "<td class=\"birdie\">" + mark;
 	} else if (playerScore < par) {
-		return "<td class=\"eagle\">" + playerScore + "</td>";
+		return "<td class=\"eagle\">" + mark;
 	} else {
-		return "<td class=\"par\">" + playerScore + "</td>";
+		return "<td class=\"par\">" + mark;
 	}
 }
 
@@ -97,6 +116,10 @@ function formatScoreAtIndex(playerScores, i, par, showPar) {
 	} else {
 		return formatScore(playerScores.scores[i], par, showPar);
 	}
+}
+
+function playerStyle(color) {
+	return color ? " style=\"--player: " + color + "\"" : "";
 }
 
 function formatOverUnder(overUnder) {
@@ -235,7 +258,7 @@ function formatScoreCardVertical() {
 		html += "<tr class=\"vscData\">";
 		html += formatScore(frontScore, Number(staticScoreCard.par[i]), true);
 		html += formatScore(backScore, Number(staticScoreCard.par[i+9]), true);
-		html += "</td>\n";
+		html += "</tr>\n";
 	}
 
 	html += "<tr class=\"vscTotal\">";
@@ -266,7 +289,7 @@ function formatScoreCard() {
 	for (let i = 0; i < playerCount; i++) {
 		playerScores[i] = {};
 		playerScores[i].row =
-			"<tr class=\"scData\"><td class=\"scName\">"
+			"<tr class=\"scData\"><td class=\"scName\"" + playerStyle(staticScoreCard.players[i].color) + ">"
 			+ staticScoreCard.players[i].name
 			+ "</td>";
 	}
@@ -287,14 +310,14 @@ function formatScoreCard() {
 	} else {
 		html += headerRow + "<td class=\"scTotal\">TOTAL</td></tr>";
 	}
-	html += parRow + "<td class=\"scTotal\">PAR " + (scoreCard.frontPar + scoreCard.backPar) + "</td></td>";
+	html += parRow + "<td class=\"scTotal\">PAR " + (scoreCard.frontPar + scoreCard.backPar) + "</td></tr>";
 
 	for (let i = 0; i < playerCount; i++) {
 		let totalTd = "";
 		if (staticScoreCard.playStyle == "match") {
 			let matchResult = scoreCard.playerScores[i].matchResult;
 			if (matchResult == 0) {
-				totalTd +="<td class=\"scTotal blank\">&nbsp;</td>x";
+				totalTd +="<td class=\"scTotal blank\">&nbsp;</td>";
 			} else {
 				totalTd +="<td class=\"scTotal\">" + matchResult + "</td>";
 			}
@@ -302,7 +325,7 @@ function formatScoreCard() {
 			let overUnder = scoreCard.playerScores[i].overUnder;
 			totalTd +="<td class=\"scTotal\">" + formatOverUnder(overUnder) + "</td>";
 		}
-		html += playerScores[i].row + totalTd + "</td>";
+		html += playerScores[i].row + totalTd + "</tr>";
 	}
 	return html + "</table>";
 }
@@ -319,7 +342,7 @@ function formatScoreCardMcGolf() {
 	for (let i = 0; i < playerCount; i++) {
 		playerScores[i] = {};
 		playerScores[i].row =
-			"<tr class=\"mcScData\"><td class=\"mcScName\">"
+			"<tr class=\"mcScData\"><td class=\"mcScName\"" + playerStyle(staticScoreCard.players[i].color) + ">"
 			+ staticScoreCard.players[i].name
 			+ "</td>";
 	}
@@ -363,8 +386,8 @@ function formatScoreCardMcGolf() {
 	}
 
 	let html = "<table class=\"mcGolf\">";
-	html += headerRow + (staticScoreCard.playStyle == "match" ? scoreFmt("RESULT") : scoreFmt("TOTAL"))  + "</tr>";
-	html += parRow + "<td class=\"mcScTotal\">" + (scoreCard.frontPar + scoreCard.backPar) + "</td></td>";
+	html += headerRow + (staticScoreCard.playStyle == "match" ? scoreFmt("RESULT", "mcScTotal") : scoreFmt("TOTAL", "mcScTotal"))  + "</tr>";
+	html += parRow + "<td class=\"mcScTotal\">" + (scoreCard.frontPar + scoreCard.backPar) + "</td></tr>";
 
 	for (let i = 0; i < playerCount; i++) {
 		let totalTd = "";
@@ -379,49 +402,8 @@ function formatScoreCardMcGolf() {
 }
 
 function setOpacity(n) {
-	const opacityHex = Math.floor((255*Number(n))).toString(16).toUpperCase();
-	const opacityPct = (100*Number(n)) + '%';
-
-	console.log("Opacity set to: " + n + " hex: " + opacityHex + " pct: " + opacityPct);
-
-	document.querySelectorAll(".scData > td, .vscData > td").forEach((el) => {
-		el.style.background = 'rgb(120 120 120 / ' + opacityPct + ')';
-	});
-	document.querySelectorAll(".scData > td.scName").forEach((el, i) => {
-		el.style.background = 'linear-gradient(to left, rgb(120 120 120 / ' + opacityPct + '), ' +
-					staticScoreCard.players[i].color + ")";
-	});
-	document.querySelectorAll(".scSubHeader > td, .vscTotal > td, .vscHeader > td").forEach((el) => {
-		el.style.background = 'rgb(80 80 80 / ' + opacityPct + ')';
-	});
-
-	const verticalStyles = new Map([
-		["par",    "white"],
-		["birdie", "lime"],
-		["bogey",  "black"],
-		["eagle",  "yellow"],
-	]);
-	verticalStyles.forEach((val, key) => {
-		document.querySelectorAll(".vscData > td." + key).forEach((el) => {
-			el.style.background = "url('http://shorne.noip.me/downloads/images/" + val + "-disc.png'), "
-				+  'rgb(120 120 120 / ' + (100*Number(n)) + '%)';
-			el.style.backgroundSize = "contain";
-			el.style.backgroundPosition = "center";
-			el.style.backgroundRepeat = "no-repeat";
-		});
-	});
-	const mcColors = new Map([
-		[".mcScHeader > td, .mcScData > td", "#333FBC"],
-		[".mcScSubHeader > td", "#5A91CB"],
-		[".mcScHeader > td.band, .mcScData > td.band", "#0D1FE2"],
-		[".mcScSubHeader > td.band", "#6BE5F5"],
-	]);
-	mcColors.forEach((val, key) => {
-		document.querySelectorAll(key).forEach((el) => {
-			el.style.background = val + opacityHex;
-		});
-	});
-
+	console.log("Opacity set to: " + n);
+	document.documentElement.style.setProperty("--sc-alpha", Number(n));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -447,6 +429,8 @@ var scoreCard = {
      { scores: [] }
    ],
 };
+
+var hasRendered = false;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -478,6 +462,10 @@ bc.onmessage = (event) => {
 
 	if (event.data.scores != null) {
 		setScores(event.data.scores);
+	}
+
+	if (event.data.theme != null) {
+		applyTheme(event.data.theme);
 	}
 
 	if (event.data.style != null) {

@@ -85,6 +85,21 @@
 		localStorage.setItem("opacity", pct)
 	}
 
+	function themeChange(input) {
+		theme[input.dataset.key] = input.value;
+		localStorage.setItem("theme", JSON.stringify(theme));
+		bc.postMessage({theme: theme});
+	}
+
+	function resetTheme() {
+		theme = {};
+		localStorage.removeItem("theme");
+		document.querySelectorAll(".colorPickers input").forEach((el) => {
+			el.value = el.defaultValue;
+		});
+		bc.postMessage({theme: theme});
+	}
+
 	function postNames() {
 		/* Read DOM to model */
 		p1Name = document.getElementById("p1Name").value;
@@ -408,6 +423,7 @@
 	var hotkeyNextHoleOld = hotkeyNextHole;
 	var hotkeySwapOld = hotkeySwap;
 	var slider = document.getElementById("scoreOpacity");
+	var theme = {};
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// onload stuff
@@ -454,6 +470,16 @@
 		slider.value = localStorage.getItem("opacity");
 		setOpacity(slider.value);
 	}
+	try {
+		theme = JSON.parse(localStorage.getItem("theme")) || {};
+	} catch (e) {
+		theme = {};
+	}
+	document.querySelectorAll(".colorPickers input").forEach((el) => {
+		if (theme[el.dataset.key]) {
+			el.value = theme[el.dataset.key];
+		}
+	});
 	document.getElementById("verNum").innerHTML = versionNum;
 	postNames();
 

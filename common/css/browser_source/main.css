@@ -1,209 +1,370 @@
- body {
-     background-color: rgba(0, 0, 0, 0);
-     margin: 0px auto;
-     overflow: hidden;
-     font-family: "tahoma", sans-serif;
- }
+/*
+ * Browser source (overlay) styles.
+ *
+ * Panel backgrounds use rgb(... / var(--sc-alpha)) so the control panel's
+ * opacity slider only has to set one custom property.  Avoid newer CSS
+ * (:has, color-mix, nesting) since OBS 28/29 ship Chromium 103.
+ */
 
-/* Normal td */
-.scData > td {
- 	background-color: #444444;
-	color: #ebebeb;
-	padding: 2px;
-	font-weight: bold;
+@font-face {
+	font-family: "Barlow Condensed";
+	src: url("../../fonts/BarlowCondensed-600normal.woff2") format("woff2");
+	font-weight: 600;
+	font-style: normal;
 }
-
-/* McGolf td's */
-.mcGolf {
-	font-family: "Gotham Condensed", "Montserrat", sans-serif;
-	color: rgba(255, 255, 255, 0.9);
+@font-face {
+	font-family: "Barlow Condensed";
+	src: url("../../fonts/BarlowCondensed-700normal.woff2") format("woff2");
+	font-weight: 700;
+	font-style: normal;
 }
-
-.mcScHeader > td {
- 	background-color: #333FBC99;
- 	width: 28px;
-	padding: 2px;
-}
-.mcScSubHeader > td {
- 	background-color: #5A91CB99;
-	color: rgba(0, 0, 0, 0.9);
-	padding: 2px;
-}
-.mcScData > td {
- 	background-color: #333FBC99;
-	padding: 2px;
-	font-weight: bold;
-}
-.mcScHeader > td.band {
- 	background-color: #0D1FE299;
-}
-.mcScSubHeader > td.band {
- 	background-color: #6BE5F599;
-}
-.mcScData > td.band {
- 	background-color: #0D1FE299;
+@font-face {
+	font-family: "Barlow Condensed";
+	src: url("../../fonts/BarlowCondensed-800italic.woff2") format("woff2");
+	font-weight: 800;
+	font-style: italic;
 }
 
+:root {
+	--sc-alpha: 0.9;
 
-/* td special overrides */
-td.blank {
-	text-decoration: underline;
+	/* McGolf palette: royal blue board, golf-ball gold, flag red */
+	--royal: 42 63 209;
+	--royal-deep: 23 36 138;
+	--ink: 16 26 99;
+	--ink-deep: 9 14 62;
+	--gold: #ffc72c;
+	--red: #e8423a;
+	--green: #3dbe4e;
+	--chalk: #f5f7fb;
+	--muted: #aab6e8;
+
+	/* Normal palette: neutral charcoal glass so player colors lead */
+	--slate-head: 30 36 48;
+	--slate-sub: 20 24 33;
+	--slate-row: 12 15 21;
+
+	--cell: 32px;
+	--ease-out: cubic-bezier(0.2, 0.9, 0.25, 1);
+	--ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-td.bogey {
-	color: #000080;
-	/* -webkit-text-stroke: 1px white; */
-	text-rendering: optimizeLegibility;
+
+body {
+	background-color: rgba(0, 0, 0, 0);
+	margin: 0 auto;
+	overflow: hidden;
+	color: var(--chalk);
+	font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	-webkit-font-smoothing: antialiased;
 }
-td.birdie {
-	color: lime;
-	/* -webkit-text-stroke: 1px black; */
-}
-td.eagle {
-	/* -webkit-text-stroke: 1px black; */
-	color: yellow;
+
+.scoreCard {
+	display: inline-block;
+	animation: sc-enter 700ms var(--ease-out) both;
 }
 
 .scoreCard > table {
 	text-align: center;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 }
+
+td {
+	padding: 0;
+	line-height: 1;
+}
+
+/* Score marks: classic scorecard notation, legible without color. */
+td > .mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.2em;
+	height: 1.2em;
+	box-sizing: border-box;
+}
+td.birdie > .mark {
+	background: var(--red);
+	border-radius: 50%;
+	color: var(--on-birdie, #fff);
+}
+td.eagle > .mark {
+	background: var(--gold);
+	border-radius: 50%;
+	color: var(--on-accent, rgb(var(--ink-deep)));
+	box-shadow: 0 0 0 1.5px rgb(var(--ink-deep)), 0 0 0 3px var(--gold);
+}
+td.bogey > .mark {
+	border: 2px solid currentColor;
+	border-radius: 2px;
+}
+td.double > .mark {
+	box-shadow: 0 0 0 1.5px rgb(var(--ink-deep)), 0 0 0 3px currentColor;
+}
+td.blank {
+	color: transparent;
+}
+
+/* Player rows sit as separate bars, a hairline apart. */
+.scData > td, .mcScData > td {
+	border-top: 3px solid transparent;
+	background-clip: padding-box;
+}
+
+/* ---------------------------------------------------------------- */
+/* Normal                                                            */
+/* ---------------------------------------------------------------- */
+
 .scHeader > td {
- 	width: 28px;
- 	background-color: blue;
-	background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
-	color: #ebebeb;
-	padding: 2px;
-}
-.scHeader > td.scTotal, .scSubHeader > td.scTotal {
-	width: 64px;
-	color: white;
-}
-.scData > td.scTotal, .scData > td.scName {
-	font-size: 15pt;
-	color: white;
-	padding: 8px;
+	width: var(--cell);
+	height: 24px;
+	background: rgb(var(--slate-head) / var(--sc-alpha));
+	color: var(--on-header, var(--chalk));
+	font-size: 15px;
 }
 .scSubHeader > td {
- 	background-color: #232323;
-	color: #c0c0c0;
-	padding: 2px;
+	height: 20px;
+	background: rgb(var(--slate-sub) / var(--sc-alpha));
+	color: var(--on-header-muted, #9aa3b5);
+	font-size: 14px;
 }
-/* Vertical card extras */
+.scData > td {
+	height: 38px;
+	background: rgb(var(--slate-row) / var(--sc-alpha));
+	color: var(--on-board, var(--chalk));
+	font-size: 20px;
+	font-weight: 700;
+}
+.scHeader > td:first-child, .scSubHeader > td:first-child {
+	background: transparent;
+}
+.scHeader > td:nth-child(2) { border-top-left-radius: 6px; }
+.scHeader > td:last-child { border-top-right-radius: 6px; }
+
+/* Thin rule before hole 10 (column 1 is the name column) */
+.scHeader > td:nth-child(11), .scSubHeader > td:nth-child(11), .scData > td:nth-child(11) {
+	box-shadow: inset 1px 0 rgb(255 255 255 / 0.12);
+}
+
+.scHeader > td.scTotal, .scSubHeader > td.scTotal {
+	width: 70px;
+	font-style: italic;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+}
+.scSubHeader > td.scTotal {
+	color: var(--on-header, var(--chalk));
+}
+td.scName {
+	position: relative;
+	min-width: 96px;
+	padding: 0 16px 0 18px;
+	text-align: left;
+	font-size: 21px;
+	font-style: italic;
+	font-weight: 800;
+	white-space: nowrap;
+	box-shadow: inset 6px 0 var(--player, var(--chalk));
+}
+.scData > td.scTotal {
+	background: var(--total-bg, rgb(255 255 255 / var(--sc-alpha)));
+	color: var(--on-accent, rgb(var(--slate-row)));
+	font-size: 24px;
+	font-style: italic;
+	font-weight: 800;
+}
+/* Match play: no result yet, so don't show an empty white block */
+.scData > td.scTotal.blank {
+	background: rgb(var(--slate-row) / var(--sc-alpha));
+}
+
+/* ---------------------------------------------------------------- */
+/* McGolf                                                            */
+/* ---------------------------------------------------------------- */
+
+.mcScHeader > td {
+	width: var(--cell);
+	height: 24px;
+	background: rgb(var(--royal) / var(--sc-alpha));
+	color: var(--on-header, var(--chalk));
+	font-size: 15px;
+}
+.mcScSubHeader > td {
+	height: 22px;
+	background: rgb(var(--royal-deep) / var(--sc-alpha));
+	color: var(--on-header-muted, var(--muted));
+	font-size: 15px;
+}
+.mcScData > td {
+	height: 36px;
+	background: rgb(var(--ink) / var(--sc-alpha));
+	color: var(--on-board, var(--chalk));
+	font-size: 20px;
+	font-weight: 700;
+}
+.mcScHeader > td:first-child, .mcScSubHeader > td:first-child, td.mcScName {
+	min-width: 64px;
+	padding: 0 14px;
+	text-align: left;
+	font-style: italic;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+}
+.mcScHeader > td:first-child { border-top-left-radius: 6px; }
+.mcScHeader > td:last-child { border-top-right-radius: 6px; }
+td.mcScName {
+	font-size: 21px;
+	letter-spacing: 0;
+	white-space: nowrap;
+	box-shadow: inset 6px 0 var(--player, var(--gold));
+	padding-left: 18px;
+}
+.mcGolf td.band {
+	width: 40px;
+	background: rgb(var(--ink-deep) / var(--sc-alpha));
+	color: var(--band-text, var(--gold));
+}
+.mcScHeader > td.band, .mcScHeader > td.mcScTotal {
+	font-style: italic;
+	font-weight: 800;
+	font-size: 14px;
+	letter-spacing: 0.04em;
+}
+.mcGolf td.mcScTotal {
+	width: 56px;
+	background: var(--gold);
+	color: var(--on-accent, rgb(var(--ink-deep)));
+	font-style: italic;
+	font-weight: 800;
+}
+.mcScData > td.mcScTotal {
+	font-size: 24px;
+}
+/* The gold column reads as one block, so drop its row gaps */
+.mcScData > td.mcScTotal {
+	border-top-color: var(--gold);
+}
+
+/* ---------------------------------------------------------------- */
+/* Vertical                                                          */
+/* ---------------------------------------------------------------- */
+
 .vscHeader > td {
- 	background-color: #232323;
-	text-transform: capitalize;
-	font-size: 8px;
-	font-weight: lighter;
-	color: white;
+	width: 46px;
+	height: 22px;
+	background: rgb(var(--royal) / var(--sc-alpha));
+	color: var(--on-header, var(--chalk));
+	font-size: 13px;
+	font-style: italic;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 }
-.vscTotal > td.done {
- 	background-color: #232323;
-	color: white;
-	font-weight: bold;
+.vscHeader > td:first-child { border-top-left-radius: 6px; }
+.vscHeader > td:last-child { border-top-right-radius: 6px; }
+.vscData > td {
+	height: 36px;
+	background: rgb(var(--ink) / var(--sc-alpha));
+	color: var(--on-board, var(--chalk));
+	font-size: 20px;
+	font-weight: 700;
+}
+.vscData > td + td {
+	box-shadow: inset 1px 0 rgb(255 255 255 / 0.1);
+}
+td.unplayed {
+	color: rgb(255 255 255 / 0.3);
+	font-weight: 600;
 }
 .vscTotal > td {
-	color: #ebebeb;
-	font-weight: lighter;
-	padding: 5px;
+	height: 36px;
+	background: rgb(var(--ink-deep) / var(--sc-alpha));
+	color: var(--muted);
+	font-size: 20px;
 }
-.vscData > td {
- 	background-color: #444444;
-	color: #ebebeb;
-	height: 28px;
+.vscTotal > td.done {
+	background: var(--gold);
+	color: var(--on-accent, rgb(var(--ink-deep)));
+	font-size: 24px;
+	font-style: italic;
+	font-weight: 800;
 }
-.vscData > td.par {
-	background: url('http://shorne.noip.me/downloads/images/white-disc.png'), #444444;
-	background-size: contain;
-	background-position: center;
-	background-repeat: no-repeat;
-	color: black;
-	height: 28px;
-}
-.vscData > td.bogey {
-	background: url('http://shorne.noip.me/downloads/images/black-disc.png'), #444444;
-	background-size: contain;
-	background-position: center;
-	background-repeat: no-repeat;
-	color: #ebebeb;
-}
-.vscData > td.birdie {
-	background: url('http://shorne.noip.me/downloads/images/lime-disc.png'), #444444;
-	background-size: contain;
-	background-position: center;
-	background-repeat: no-repeat;
-	color: black;
-}
-.vscData > td.eagle {
-	background: url('http://shorne.noip.me/downloads/images/yellow-disc.png'), #444444;
-	background-size: contain;
-	background-position: center;
-	background-repeat: no-repeat;
-	color: black;
-}
+.vscTotal > td:first-child { border-bottom-left-radius: 6px; }
+.vscTotal > td:last-child { border-bottom-right-radius: 6px; }
 
+/* ---------------------------------------------------------------- */
+/* Widgets (GIR / 3-putt counters)                                   */
+/* ---------------------------------------------------------------- */
+
+.widget .scHeader > td.scTotal {
+	width: auto;
+	padding: 0 14px;
+	background: rgb(var(--royal) / var(--sc-alpha));
+	color: var(--on-header, var(--chalk));
+	border-radius: 6px 6px 0 0;
+	font-size: 15px;
+}
+.widget .scData > td.scTotal {
+	height: 46px;
+	border-top: 0;
+	background: var(--gold);
+	color: var(--on-accent, rgb(var(--ink-deep)));
+	border-radius: 0 0 6px 6px;
+	font-size: 34px;
+}
 .scHeader.lightNumbers, .scHeader.darkNumbers {
-     visibility: hidden;
- }
-.scData.lightNumbers > td.scTotal {
+	visibility: hidden;
+}
+.widget .scData.lightNumbers > td.scTotal,
+.widget .scData.darkNumbers > td.scTotal {
 	background: none;
-	color: white;
+	font-size: 44px;
+}
+.scData.lightNumbers > td.scTotal {
+	color: #fff;
+	text-shadow: 0 2px 6px rgb(0 0 0 / 0.6);
 }
 .scData.darkNumbers > td.scTotal {
-	background: none;
-	color: black;
+	color: #000;
 }
 
- .fadeInElm {
-     visibility: visible;
-     opacity: 1;
-     transition: opacity 1s linear;
- }
+/* ---------------------------------------------------------------- */
+/* Motion: one entrance, then only cells whose value changed animate */
+/* ---------------------------------------------------------------- */
 
- .fadeOutElm {
-     visibility: hidden;
-     opacity: 0;
-     transition: visibility 0s 1s, opacity 1s linear;
- }
+@keyframes sc-enter {
+	from {
+		clip-path: inset(0 100% 0 0);
+		transform: translateX(-12px);
+	}
+	to {
+		clip-path: inset(0 0 0 0);
+		transform: none;
+	}
+}
 
- /* blink code */
+@keyframes sc-pop {
+	0% { transform: scale(0.3); opacity: 0; }
+	60% { transform: scale(1.18); opacity: 1; }
+	100% { transform: scale(1); }
+}
 
- @keyframes blinking {
-     0% {
-	 background-color: #ffffff;
-     }
+@keyframes sc-flash {
+	0% { filter: brightness(1.8); }
+	100% { filter: none; }
+}
 
-     100% {
-	 background-color: lightgreen;
-     }
- }
+td.changed > .mark, .widget td.changed {
+	animation: sc-pop 480ms var(--ease-pop) both;
+}
+td.changed.scTotal, td.changed.mcScTotal, td.changed.band, .vscTotal > td.changed {
+	animation: sc-flash 700ms ease-out;
+}
 
- .winBlink {
-     animation: blinking .10s 4;
- }
-
-
- @keyframes extblinking {
-     0% {
-	 background-color: green;
-     }
-
-     100% {
-	 background-color: red;
-     }
- }
-
- /* Fading animation */
- .fade {
-     animation-name: fade;
-     animation-duration: 1.5s;
- }
-
- @keyframes fade {
-     from {
-	 opacity: .4
-     }
-
-     to {
-	 opacity: 1
-     }
- }
+@media (prefers-reduced-motion: reduce) {
+	.scoreCard, td.changed > .mark, td.changed {
+		animation: none !important;
+	}
+}
