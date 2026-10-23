@@ -85,6 +85,43 @@
 		localStorage.setItem("opacity", pct)
 	}
 
+	/* Course pars: East, West and Custom each keep their own pars in
+	 * local storage.  Update Info saves the pars to the selected course. */
+	function loadCoursePars() {
+		try {
+			return JSON.parse(localStorage.getItem("coursePars")) || {};
+		} catch (e) {
+			return {};
+		}
+	}
+
+	function storeCoursePars() {
+		const course = document.getElementById("course");
+		const coursePars = loadCoursePars();
+		coursePars[course.value] = scoreCardPar.slice(0, scoreCardHoles);
+		localStorage.setItem("coursePars", JSON.stringify(coursePars));
+		localStorage.setItem("course", course.value);
+
+		/* Nudge the operator to enter pars the first time they pick a course */
+		const hasPars = coursePars[course.value].some((par) => par > 0);
+		const hint = document.getElementById("courseHint");
+		if (hasPars || course.value == "custom") {
+			hint.innerHTML = "";
+		} else {
+			hint.innerHTML = "Enter the " + course.options[course.selectedIndex].text
+				+ " pars and click Update Info to save them.";
+		}
+	}
+
+	function courseChange() {
+		const course = document.getElementById("course").value;
+		const pars = loadCoursePars()[course] || [];
+		for (let i = 0; i < scoreCardHoles; i++) {
+			document.getElementById("h"+(i+1)).value = pars[i] > 0 ? pars[i] : "";
+		}
+		postNames();
+	}
+
 	function themeChange(input) {
 		theme[input.dataset.key] = input.value;
 		localStorage.setItem("theme", JSON.stringify(theme));
@@ -340,6 +377,7 @@
 		localStorage.setItem("p1NameCtrlPanel", p1Name);
 		localStorage.setItem("p2NameCtrlPanel", p2Name);
 		localStorage.setItem("p2Style", p2Style);
+		storeCoursePars();
 	}
 
 	function loadScoreCard() {
@@ -480,6 +518,9 @@
 			el.value = theme[el.dataset.key];
 		}
 	});
+	/* The pars on screen belong to the last selected course; existing
+	 * setups start on Custom so their pars carry over unchanged. */
+	document.getElementById("course").value = localStorage.getItem("course") || "custom";
 	document.getElementById("verNum").innerHTML = versionNum;
 	postNames();
 

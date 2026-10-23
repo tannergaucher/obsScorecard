@@ -58,6 +58,16 @@
 		  </td>
 		 </tr>
                </table>
+	       <!-- Course: each option keeps its own pars -->
+	       <div class="horizontal courseRow">
+		 <span>Course</span>
+		 <select id="course" class="obs28" onchange="courseChange()">
+		   <option value="east">East course</option>
+		   <option value="west">West course</option>
+		   <option value="custom">Custom</option>
+		 </select>
+	       </div>
+	       <div id="courseHint" class="courseHint"></div>
 	       <!-- Scorecard creation -->
 	       <table>
 		 <tr>

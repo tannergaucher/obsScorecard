@@ -197,3 +197,20 @@ input {
 	background: none;
 	cursor: pointer;
 }
+
+.courseRow {
+	align-items: center;
+	margin: 2px 0 4px;
+}
+.courseRow select {
+	flex: 1;
+	height: 26px;
+	background: #333;
+}
+.courseHint {
+	color: #ffc72c;
+	font-size: 8pt;
+}
+.courseHint:empty {
+	display: none;
+}
