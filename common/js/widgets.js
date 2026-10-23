@@ -33,15 +33,20 @@ function styleChange(oldStyle, newStyle) {
 }
 
 function setOpacity(n) {
-	// We only do opacity setting for the normal theme
-	if (getStoredValue("widgetStyle", "normal") === "normal") {
-		document.querySelectorAll(".scData > td").forEach((el) => {
-			el.style.background = 'rgb(120 120 120 / ' + (100*Number(n)) + '%)';
-		});
-	} else {
-		document.querySelectorAll(".scData > td").forEach((el) => {
-			el.style.background = "unset";
-		});
+	// Panels read this; the Black/White widget styles have no panel to fade
+	document.documentElement.style.setProperty("--sc-alpha", Number(n));
+}
+
+// Set a counter's value, replaying its pop animation only when it changes
+function setCounter(el, value) {
+	if (el.textContent == String(value)) {
+		return;
+	}
+	el.textContent = value;
+	if (hasRendered) {
+		el.classList.remove("changed");
+		void el.offsetWidth; // restart the animation
+		el.classList.add("changed");
 	}
 }
 
@@ -55,6 +60,7 @@ function registerBroadCastHandler(f) {
 
 const bc = new BroadcastChannel('sc-main');
 const bcHandlers = [];
+var hasRendered = false;
 
 var opacity = 0.99;
 
@@ -68,6 +74,10 @@ bc.onmessage = (event) => {
 		console.log("event.data(opacity): " + event.data.opacity);
 		opacity = event.data.opacity;
 		setOpacity(opacity);
+	}
+
+	if (event.data.theme != null) {
+		applyTheme(event.data.theme);
 	}
 
 	if (event.data.widgetStyle != null) {

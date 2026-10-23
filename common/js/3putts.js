@@ -23,7 +23,7 @@ function renderPuttCounter() {
 		}
 	}
 
-	threePutts.innerHTML = count;
+	setCounter(threePutts, count);
 }
 
 function setScores(scores) {
@@ -66,5 +66,6 @@ registerBroadCastHandler((event) => {
 	}
 
 	renderPuttCounter();
+	hasRendered = true;
 })();
 

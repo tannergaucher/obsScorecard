@@ -29,7 +29,7 @@ function renderGirCounter() {
 		}
 	}
 
-	girCount.innerHTML = count;
+	setCounter(girCount, count);
 }
 
 function setStaticScoreCard(scoreCardHoles, scoreCardPar) {
@@ -99,5 +99,6 @@ registerBroadCastHandler((event) => {
 		scoreCard.players[0].putts = p1Putts.split(",");
 	}
 	renderGirCounter();
+	hasRendered = true;
 })();
 
